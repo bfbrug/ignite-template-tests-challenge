@@ -25,8 +25,6 @@ describe('Authenticate user', () => {
       password: '123456',
     });
 
-    //console.log(result);
-
     expect(result).toHaveProperty('token');
   })
 })

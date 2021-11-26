@@ -33,9 +33,9 @@ export class AuthenticateUserUseCase {
       throw new IncorrectEmailOrPasswordError();
     }
 
-    const { expiresIn } = authConfig.jwt;
+    const { secret, expiresIn } = authConfig.jwt;
 
-    const token = sign({ user }, 'senhasupersecreta123', {
+    const token = sign({ user }, secret, {
       subject: user.id,
       expiresIn
     });

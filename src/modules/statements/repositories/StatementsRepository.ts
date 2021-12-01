@@ -1,7 +1,8 @@
 import { getRepository, Repository } from "typeorm";
 
-import { Statement } from "../entities/Statement";
+import { OperationType, Statement } from "../entities/Statement";
 import { ICreateStatementDTO } from "../useCases/createStatement/ICreateStatementDTO";
+import { ICreateTransferDTO } from "../useCases/createTransfer/ICreateTransferTDO";
 import { IGetBalanceDTO } from "../useCases/getBalance/IGetBalanceDTO";
 import { IGetStatementOperationDTO } from "../useCases/getStatementOperation/IGetStatementOperationDTO";
 import { IStatementsRepository } from "./IStatementsRepository";
@@ -45,7 +46,7 @@ export class StatementsRepository implements IStatementsRepository {
     });
 
     const balance = statement.reduce((acc, operation) => {
-      if (operation.type === 'deposit') {
+      if ((operation.type === 'deposit') || (operation.sender_id)) {
         return acc + operation.amount;
       } else {
         return acc - operation.amount;
@@ -60,5 +61,28 @@ export class StatementsRepository implements IStatementsRepository {
     }
 
     return { balance }
+  }
+
+  async transfer({ user_id, sender_id, amount, description}: ICreateTransferDTO):Promise<Statement[]>{
+
+    const favoredTransfer = this.repository.create({
+      user_id,
+      sender_id,
+      amount,
+      description,
+      type: OperationType.TRANSFER
+    });
+
+    const senderTransfer = this.repository.create({
+      user_id,
+      amount,
+      description,
+      type: OperationType.TRANSFER
+    });
+
+    await this.repository.save(favoredTransfer);
+		await this.repository.save(senderTransfer);
+
+		return [favoredTransfer , senderTransfer];
   }
 }

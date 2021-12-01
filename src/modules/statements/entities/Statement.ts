@@ -13,6 +13,7 @@ import { User } from '../../users/entities/User';
 enum OperationType {
   DEPOSIT = 'deposit',
   WITHDRAW = 'withdraw',
+  TRANSFER = 'transfer',
 }
 
 @Entity('statements')
@@ -41,6 +42,13 @@ class Statement {
 
   @CreateDateColumn()
   updated_at: Date;
+
+  @Column()
+  sender_id: string;
+
+  @ManyToOne(() => User, user => user.statement)
+  @JoinColumn({ name: 'sender_id' })
+  sender: User;
 
   constructor() {
     if (!this.id) {

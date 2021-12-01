@@ -3,9 +3,11 @@ import { CreateUserUseCase } from "../../../users/useCases/createUser/CreateUser
 import { OperationType } from "../../entities/Statement";
 import { InMemoryStatementsRepository } from "../../repositories/in-memory/InMemoryStatementsRepository";
 import { CreateStatementUseCase } from "../createStatement/CreateStatementUseCase";
+import { CreateTransferUseCase } from "../createTransfer/CreateTransferUseCase";
 import { GetBalanceUseCase } from "./GetBalanceUseCase";
 
 let createStatementUseCase: CreateStatementUseCase;
+let createTransferUseCase: CreateTransferUseCase;
 let createUserUseCase: CreateUserUseCase;
 let inMemoryStatementsRepository: InMemoryStatementsRepository;
 let inMemoryUsersRepository: InMemoryUsersRepository;
@@ -16,6 +18,7 @@ describe('Get Balance', () => {
     inMemoryUsersRepository = new InMemoryUsersRepository();
     inMemoryStatementsRepository = new InMemoryStatementsRepository();
     createStatementUseCase = new CreateStatementUseCase(inMemoryUsersRepository,inMemoryStatementsRepository);
+    createTransferUseCase = new CreateTransferUseCase(inMemoryUsersRepository,inMemoryStatementsRepository);
     createUserUseCase = new CreateUserUseCase(inMemoryUsersRepository);
     getBalanceUseCase = new GetBalanceUseCase(inMemoryStatementsRepository, inMemoryUsersRepository)
   });
@@ -27,15 +30,21 @@ describe('Get Balance', () => {
       password: '123456'
     });
 
+    const favored = await createUserUseCase.execute({
+      name: 'User test',
+      email: 'mail1@example.com',
+      password: '123456'
+    });
+
     await createStatementUseCase.execute({
       user_id: user.id as string,
-      amount: 250.00,
+      amount: 750.00,
       type: 'deposit' as OperationType,
       description: 'Deposit de cash'
     });
 
     await createStatementUseCase.execute({
-      user_id: user.id as string,
+      user_id: favored.id as string,
       amount: 1250.00,
       type: 'deposit' as OperationType,
       description: 'Create website'
@@ -43,18 +52,24 @@ describe('Get Balance', () => {
 
     await createStatementUseCase.execute({
       user_id: user.id as string,
-      amount: 300.00,
+      amount: 250.00,
       type: 'withdraw' as OperationType,
       description: 'Withdraw de cash'
     });
+
+    await createTransferUseCase.execute({
+      user_id: user.id as string,
+      sender_id: favored.id as string,
+      amount: 250.00,
+      description: 'Favored transfer de cash'
+     });
 
     const balance = await getBalanceUseCase.execute({
       user_id: user.id as string
     });
 
     expect(balance).toHaveProperty('balance');
-    expect(balance.statement.length).toBe(3);
-    expect(balance.balance).toBe(1200);
+    expect(balance.balance).toBe(750);
   })
 
 })
